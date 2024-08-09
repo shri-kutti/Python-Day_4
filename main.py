@@ -91,26 +91,47 @@ def addPlayer(player : Players):
 
 @app.put("/updatePlayer/{id}")
 def updatePlayerDetails(id : int,player : UpdatePlayers):
-     sql = "select * from sp_players where id = %s"
-     val = (id,)
-     mycursor.execute(sql,val)
-     check = mycursor.fetchone()
+     # sql = "select * from sp_players where id = %s"
+     # val = (id,)
+     # mycursor.execute(sql,val)
+     # check = mycursor.fetchone()
+     # mydb.commit()
+     # if check:
+     #      print("is in there")
+     #      sql = "update sp_players set name = %s where id = %s"
+     #      # print(player) returns name='asmeen' age = None
+     #      val = (player.name,id) #player.name --> asmeen
+     #      mycursor.execute(sql,val)
+     #      check = mycursor.fetchone() # dumb bruh ur update does no retrun so what are u gonna check phssh
+     #      mydb.commit()
+     #      if check:
+     #           return check
+     #      return check
+     query_parts = []
+     paramers = []
+
+     for key,value in player.model_dump().items(): # when used without .items() it gives a error ra like it only access the keys like returns name age like this we need value la so using items it returns tuple of the value inside the dictionary --> () x{}
+          if value is not None:
+               query_parts.append(f"{key} = %s")  # formatted string massah . coolers bruh
+               paramers.append(value)
+     # if id in checker:
+     # if player.name is not None:
+     #      query_parts.append("name = %s")
+     #      paramers.append(player.name)
+     # if player.age is not None:
+     #      query_parts.append("age = %s")
+     #      paramers.append(player.age)
+     paramers.append(id)
+     sql = "update sp_players set " + ", ".join(query_parts) + " where id = %s"
+     # print(sql)
+     mycursor.execute(sql,tuple(paramers))
      mydb.commit()
-     if check:
-          print("is in there")
-          sql = "update sp_players set name = %s where id = %s"
-          # print(player) returns name='asmeen' age = None
-          val = (player.name,id) #player.name --> asmeen
-          mycursor.execute(sql,val)
-          check = mycursor.fetchone() # dumb bruh ur update does no retrun so what are u gonna check phssh
-          mydb.commit()
-          if check:
-               return check
-          return check
-     else: 
-          print("id not there")
-          check = None
-          return "is not in there"
+     
+     return "updated maga"
+     # else: 
+     #      print("id not there")
+     #      check = None
+     #      return "is not in there"
      
      
      # if id not in entry:
@@ -137,6 +158,8 @@ def updatePlayerDetails(id : int,player : UpdatePlayers):
 
 @app.delete("/delete/{id}")
 def deletePlayer(id : int):
+     # delete is dml while truncate is ddl so delete can roll back trans while trunc cannot
+     #truncate can't work when frgn key  is assigned to some blah
      # if id not in entry:
      #      return "Error : ID not present"
      #mysql functions and bla bla to delete the given data from endpt to db *-*
@@ -145,13 +168,21 @@ def deletePlayer(id : int):
      mycursor.execute(sql,val)
      mydb.commit()
      print("succes fuly deleted")
-
+     # sql = "select * from sp_players"
+     mycursor.execute("select * from sp_players")
+     sql = mycursor.fetchall()
+     mydb.commit()
+     if mycursor.rowcount == 0:
+          mycursor.execute("truncate table sp_players")
+          mydb.commit()
+          print("db cleared and reset done")
      # del entry[id]
      return "Successfully deleted"
 
 @app.post("/getPlayers")
 def displayPlayers():
      #mysql functions and bla bla to retrive data from db <->
+
      mycursor.execute("select * from sp_players")
      result = mycursor.fetchall()
      # return entry
